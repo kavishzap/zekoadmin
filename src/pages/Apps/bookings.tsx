@@ -47,6 +47,29 @@ const BookingTable = () => {
             .join("");
     };
 
+    const urlToDataUrl = (url: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous'; // Enable CORS for external images
+
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                resolve(dataUrl);
+            };
+
+            img.onerror = () => {
+                reject(new Error('Failed to load image from URL'));
+            };
+
+            img.src = url;
+        });
+    };
+
     const compressImage = (base64Str: string, maxWidth = 600, maxHeight = 800): Promise<string> => {
         return new Promise((resolve) => {
             const img = new Image();
@@ -132,20 +155,30 @@ const BookingTable = () => {
                 let compressedConcertImage1 = '';
                 try {
                     if (concert?.logo) {
-                        assetImg = concert.logo.startsWith('data:')
-                            ? concert.logo
-                            : `data:image/png;base64,${concert.logo}`;
+                        // Check if it's a URL or base64
+                        if (concert.logo.startsWith('http://') || concert.logo.startsWith('https://')) {
+                            // It's a URL, convert to data URL
+                            assetImg = await urlToDataUrl(concert.logo);
+                        } else if (concert.logo.startsWith('data:')) {
+                            // Already a data URL
+                            assetImg = concert.logo;
+                        } else {
+                            // Assume it's base64
+                            assetImg = `data:image/png;base64,${concert.logo}`;
+                        }
+                        compressedConcertImage1 = await compressImage(assetImg);
                     }
-                    compressedConcertImage1 = await compressImage(assetImg);
                 } catch (e) {
                     console.warn('Logo image fallback failed:', e);
                 }
-                const assetWidth = 30;
-                const assetHeight = 6;
+                const assetWidth = 20;
+                const assetHeight = 20;
                 const spacing = 5; // space between images
                 const assetX = logoX - spacing - assetWidth;
                 const assetY = logoY;
-                doc.addImage(compressedConcertImage1, 'PNG', assetX, assetY, assetWidth, assetHeight);
+                if (compressedConcertImage1) {
+                    doc.addImage(compressedConcertImage1, 'JPEG', assetX, assetY, assetWidth, assetHeight);
+                }
 
                 // THEN YOUR ORIGINAL LOGO
                 doc.addImage(logoImg, 'PNG', logoX, logoY, logoWidth, logoHeight);
@@ -158,11 +191,20 @@ const BookingTable = () => {
             // Add concert image
             // Add concert image on the left, QR on the right (side by side)
             if (booking.concertImage) {
-                const concertImageBase64 = booking.concertImage.startsWith('data:')
-                    ? booking.concertImage
-                    : `data:image/jpeg;base64,${booking.concertImage}`;
-                const compressedConcertImage = await compressImage(concertImageBase64);
+                let concertImageDataUrl = '';
                 try {
+                    // Check if it's a URL or base64
+                    if (booking.concertImage.startsWith('http://') || booking.concertImage.startsWith('https://')) {
+                        // It's a URL, convert to data URL
+                        concertImageDataUrl = await urlToDataUrl(booking.concertImage);
+                    } else if (booking.concertImage.startsWith('data:')) {
+                        // Already a data URL
+                        concertImageDataUrl = booking.concertImage;
+                    } else {
+                        // Assume it's base64
+                        concertImageDataUrl = `data:image/jpeg;base64,${booking.concertImage}`;
+                    }
+                    const compressedConcertImage = await compressImage(concertImageDataUrl);
                     const imgWidth = 40;
                     const imgHeight = 50;
                     const imgX = margin; // Left margin

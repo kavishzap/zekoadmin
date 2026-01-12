@@ -81,6 +81,7 @@ const UserProfilesTable = () => {
               <tr>
                 <th>Name</th>
                 <th>Email</th>
+                <th>Phone</th>
               </tr>
             </thead>
             <tbody>
@@ -88,6 +89,7 @@ const UserProfilesTable = () => {
                 <tr key={p.id}>
                   <td>{p.first_name} {p.last_name}</td>
                   <td>{p.email}</td>
+                  <td>{p.phone}</td>
                 </tr>
               ))}
             </tbody>

@@ -152,22 +152,6 @@ const ConcertManagement = () => {
         setModalOpen(true);
     };
 
-    const handleImageUpload = async (files: FileList | null, key: 'concert_image' | 'front_image' | 'logo') => {
-        if (!files || files.length === 0) return;
-        const file = files[0];
-        const reader = new FileReader();
-
-        reader.onload = () => {
-            const base64 = (reader.result as string).split(',')[1];
-            setFormData(prev => ({ ...prev, [key]: base64 }));
-        };
-
-        reader.onerror = () => {
-            Swal.fire('Error', 'Failed to read image file.', 'error');
-        };
-
-        reader.readAsDataURL(file);
-    };
 
 
     const handleSubmit = async () => {
@@ -190,7 +174,7 @@ const ConcertManagement = () => {
         if (
             !concert_name || !concert_date || !concert_google_map_link ||
             !concert_location_name || !concert_start_time || !concert_end_time ||
-            !concert_type || !concert_description || !concert_status || !concert_image || !logo || !terms
+            !concert_type || !concert_description || !concert_status || !concert_image || !terms
         ) {
             Swal.fire('Validation Error', 'Please fill in all fields.', 'warning');
             return;
@@ -309,9 +293,12 @@ const ConcertManagement = () => {
                                 <td>
                                     {concert.concert_image ? (
                                         <img
-                                            src={`data:image/jpeg;base64,${concert.concert_image.split(' ')[0]}`}
+                                            src={concert.concert_image}
                                             alt="Concert"
                                             className="w-12 h-12 object-cover rounded"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48"%3E%3Crect fill="%23ccc" width="48" height="48"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="10"%3EN/A%3C/text%3E%3C/svg%3E';
+                                            }}
                                         />
                                     ) : (
                                         'N/A'
@@ -320,9 +307,12 @@ const ConcertManagement = () => {
                                 <td>
                                     {concert.front_image ? (
                                         <img
-                                            src={`data:image/jpeg;base64,${concert.front_image.split(' ')[0]}`}
+                                            src={concert.front_image}
                                             alt="Front"
                                             className="w-12 h-12 object-cover rounded"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48"%3E%3Crect fill="%23ccc" width="48" height="48"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="10"%3EN/A%3C/text%3E%3C/svg%3E';
+                                            }}
                                         />
                                     ) : (
                                         'N/A'
@@ -332,9 +322,12 @@ const ConcertManagement = () => {
                                 <td>
                                     {concert.logo ? (
                                         <img
-                                            src={`data:image/jpeg;base64,${concert.logo.split(' ')[0]}`}
-                                            alt="Front"
+                                            src={concert.logo}
+                                            alt="Logo"
                                             className="w-12 h-12 object-cover rounded"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48"%3E%3Crect fill="%23ccc" width="48" height="48"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-size="10"%3EN/A%3C/text%3E%3C/svg%3E';
+                                            }}
                                         />
                                     ) : (
                                         'N/A'
@@ -442,17 +435,70 @@ const ConcertManagement = () => {
                                         </select>
                                     </div>
                                     <div className="col-span-full">
-                                        <label className="block text-sm text-gray-700 dark:text-gray-200 mb-2">Inside image</label>
-                                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files, 'concert_image')} />
-
+                                        <label className="block text-sm text-gray-700 dark:text-gray-200 mb-2">Inside image URL</label>
+                                        <input
+                                            type="url"
+                                            className="form-input w-full"
+                                            placeholder="https://example.com/image.jpg"
+                                            value={formData.concert_image}
+                                            onChange={(e) => setFormData({ ...formData, concert_image: e.target.value })}
+                                        />
+                                        {formData.concert_image && (
+                                            <div className="mt-2">
+                                                <img
+                                                    src={formData.concert_image}
+                                                    alt="Inside image preview"
+                                                    className="w-32 h-32 object-cover rounded border"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="col-span-full">
-                                        <label className="block text-sm text-gray-700 dark:text-gray-200 mb-2">Upload Front Image</label>
-                                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files, 'front_image')} />
+                                        <label className="block text-sm text-gray-700 dark:text-gray-200 mb-2">Front Image URL</label>
+                                        <input
+                                            type="url"
+                                            className="form-input w-full"
+                                            placeholder="https://example.com/front-image.jpg"
+                                            value={formData.front_image}
+                                            onChange={(e) => setFormData({ ...formData, front_image: e.target.value })}
+                                        />
+                                        {formData.front_image && (
+                                            <div className="mt-2">
+                                                <img
+                                                    src={formData.front_image}
+                                                    alt="Front image preview"
+                                                    className="w-32 h-32 object-cover rounded border"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="col-span-full">
-                                        <label className="block text-sm text-gray-700 dark:text-gray-200 mb-2">Upload Logo</label>
-                                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files, 'logo')} />
+                                        <label className="block text-sm text-gray-700 dark:text-gray-200 mb-2">Logo URL</label>
+                                        <input
+                                            type="url"
+                                            className="form-input w-full"
+                                            placeholder="https://example.com/logo.png"
+                                            value={formData.logo}
+                                            onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
+                                        />
+                                        {formData.logo && (
+                                            <div className="mt-2">
+                                                <img
+                                                    src={formData.logo}
+                                                    alt="Logo preview"
+                                                    className="w-32 h-32 object-cover rounded border"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="col-span-full">
                                         <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Description</label>
